@@ -1,0 +1,25 @@
+sudo: required
+
+services:
+    -docker
+
+before_install:
+    - docker build -t hemakumark/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run hemakumark/react-test npm run test -- --coverage
+
+after_sucess:
+    - docker build -t hemakumark/multi-client ./client
+    - docker build -t hemakumark/multi-nginx ./nginx
+    - docker build -t hemakumark/multi-server ./server
+    - docker build -t hemakumark/multi-worker ./worker
+
+    # Login to docker hub
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin 
+
+    #Take those images and push to docker hub
+    - docker push hemakumark/multi-client
+    - docker push hemakumark/multi-nginx
+    - docker push hemakumark/multi-server
+    - docker push hemakumark/multi-worker
